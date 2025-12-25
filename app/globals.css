@@ -51,3 +51,7 @@ body {
 .theme-active {
     @apply !border-primary !border-2 shadow-lg;
 }
+
+.theme-selected {
+    @apply ring-2 ring-primary ring-offset-2;
+}

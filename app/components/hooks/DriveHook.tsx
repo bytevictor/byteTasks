@@ -1,0 +1,348 @@
+"use client";
+
+import {
+  useState,
+  useEffect,
+  createContext,
+  useContext,
+  ReactNode,
+} from "react";
+
+// Types
+export interface Task {
+  id: string;
+  text: string;
+  completed: boolean;
+  createdAt: number;
+}
+
+interface DriveContextType {
+  user: any;
+  isReady: boolean;
+  isSyncing: boolean;
+  error: string | null;
+  tasks: Task[];
+  setTasks: (tasks: Task[]) => void;
+  handleLogin: () => void;
+  handleLogout: () => void;
+  loadTasks: () => Promise<Task[]>;
+  saveTasks: (tasks: Task[]) => Promise<void>;
+}
+
+const DriveContext = createContext<DriveContextType | undefined>(undefined);
+
+const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+const DISCOVERY_DOCS = [
+  "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
+];
+const SCOPES = "https://www.googleapis.com/auth/drive.file email profile";
+const FOLDER_NAME = "byteTasks";
+const FILE_NAME = "byteTasks.json";
+
+// Global types
+declare global {
+  interface Window {
+    gapi: any;
+    google: any;
+  }
+}
+
+export const DriveProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<any>(null);
+  const [gapiInitialized, setGapiInitialized] = useState(false);
+  const [gisInitialized, setGisInitialized] = useState(false);
+  const [tokenClient, setTokenClient] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    if (!CLIENT_ID) {
+      setError(
+        "Google Client ID is missing. Please add NEXT_PUBLIC_GOOGLE_CLIENT_ID to .env.local"
+      );
+      return;
+    }
+
+    const loadGapi = () => {
+      if (typeof window !== "undefined" && window.gapi) {
+        setGapiInitialized(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://apis.google.com/js/api.js";
+      script.onload = () => {
+        window.gapi.load("client", async () => {
+          try {
+            await window.gapi.client.init({
+              discoveryDocs: DISCOVERY_DOCS,
+            });
+            setGapiInitialized(true);
+          } catch (err) {
+            console.error("Error initializing gapi client", err);
+            setError("Failed to initialize Google API client.");
+          }
+        });
+      };
+      script.onerror = (e) => {
+        console.error("Failed to load gapi script", e);
+        setError("Failed to load Google API script.");
+      };
+      document.body.appendChild(script);
+    };
+
+    const loadGis = () => {
+      const initGis = () => {
+        try {
+          const client = window.google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: async (tokenResponse: any) => {
+              if (tokenResponse && tokenResponse.access_token) {
+                // Fetch user info
+                try {
+                  const userInfoResponse = await fetch(
+                    "https://www.googleapis.com/oauth2/v3/userinfo",
+                    {
+                      headers: {
+                        Authorization: `Bearer ${tokenResponse.access_token}`,
+                      },
+                    }
+                  );
+                  const userInfo = await userInfoResponse.json();
+                  setUser(userInfo);
+                } catch (error) {
+                  console.error("Failed to fetch user info", error);
+                  // Fallback if fetch fails, though image won't work
+                  setUser({ name: "User" });
+                }
+              }
+            },
+          });
+          setTokenClient(client);
+          setGisInitialized(true);
+        } catch (err) {
+          console.error("Error initializing GIS client", err);
+          setError("Failed to initialize Google Identity Services.");
+        }
+      };
+
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.onload = initGis;
+      script.onerror = (e) => {
+        console.error("Failed to load GIS script", e);
+        setError("Failed to load Google Identity Services script.");
+      };
+      document.body.appendChild(script);
+    };
+
+    loadGapi();
+    loadGis();
+  }, []);
+
+  // Auto-load tasks when user is authenticated
+  useEffect(() => {
+    if (user) {
+      loadTasks();
+    }
+  }, [user]);
+
+  const handleLogin = () => {
+    if (tokenClient) {
+      tokenClient.requestAccessToken();
+    }
+  };
+
+  const handleLogout = () => {
+    const token = window.gapi.client.getToken();
+    if (token !== null) {
+      window.google.accounts.oauth2.revoke(token.access_token, () => {
+        window.gapi.client.setToken("");
+        setUser(null);
+        setTasks([]);
+      });
+    }
+  };
+
+  const getFolderId = async () => {
+    // 1. Check if folder exists
+    const response = await window.gapi.client.drive.files.list({
+      q: `mimeType = 'application/vnd.google-apps.folder' and name = '${FOLDER_NAME}' and trashed = false`,
+      fields: "files(id)",
+    });
+
+    if (response.result.files && response.result.files.length > 0) {
+      return response.result.files[0].id;
+    }
+
+    // 2. Create if not exists
+    const folderMetadata = {
+      name: FOLDER_NAME,
+      mimeType: "application/vnd.google-apps.folder",
+    };
+
+    const createResponse = await window.gapi.client.drive.files.create({
+      resource: folderMetadata,
+      fields: "id",
+    });
+
+    return createResponse.result.id;
+  };
+
+  const listFiles = async () => {
+    if (!window.gapi?.client?.drive) {
+      throw new Error("Google Drive API not loaded yet.");
+    }
+
+    const folderId = await getFolderId();
+
+    const response = await window.gapi.client.drive.files.list({
+      q: `name = '${FILE_NAME}' and '${folderId}' in parents and trashed = false`,
+      fields: "files(id, name)",
+    });
+    return response.result.files;
+  };
+
+  const createFile = async (initialData: Task[]) => {
+    const folderId = await getFolderId();
+
+    const fileContent = JSON.stringify(initialData);
+    const file = new Blob([fileContent], { type: "application/json" });
+    const metadata = {
+      name: FILE_NAME,
+      mimeType: "application/json",
+      parents: [folderId],
+    };
+
+    const form = new FormData();
+    form.append(
+      "metadata",
+      new Blob([JSON.stringify(metadata)], { type: "application/json" })
+    );
+    form.append("file", file);
+
+    const accessToken = window.gapi.auth.getToken().access_token;
+
+    const response = await fetch(
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+      {
+        method: "POST",
+        headers: new Headers({ Authorization: "Bearer " + accessToken }),
+        body: form,
+      }
+    );
+    return response.json();
+  };
+
+  const updateFile = async (fileId: string, data: Task[]) => {
+    const fileContent = JSON.stringify(data);
+
+    const response = await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+      {
+        method: "PATCH",
+        headers: new Headers({
+          Authorization: "Bearer " + window.gapi.auth.getToken().access_token,
+          "Content-Type": "application/json",
+        }),
+        body: fileContent,
+      }
+    );
+
+    return response.json();
+  };
+
+  const loadTasks = async (): Promise<Task[]> => {
+    setIsSyncing(true);
+    try {
+      const files = await listFiles();
+      if (files && files.length > 0) {
+        const fileId = files[0].id;
+        const response = await window.gapi.client.drive.files.get({
+          fileId: fileId,
+          alt: "media",
+        });
+        const loadedTasks = response.result as Task[];
+        setTasks(loadedTasks);
+        return loadedTasks;
+      }
+      setTasks([]);
+      return [];
+    } catch (err: any) {
+      console.error("Error loading tasks:", err);
+      // Basic loop to check error message for 'API has not been used'
+      if (err?.result?.error?.message?.includes("API has not been used")) {
+        const projectId = err.result.error.message.match(/project (\d+)/)?.[1];
+        const url = `https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=${projectId}`;
+        setError(
+          `Google Drive API is not enabled. Please enable it here: <a href="${url}" target="_blank" class="link link-accent">Enable API</a>`
+        );
+      }
+      throw err;
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const saveTasks = async (newTasks: Task[]) => {
+    setIsSyncing(true);
+    // Optimistic update
+    setTasks(newTasks);
+    try {
+      const files = await listFiles();
+      if (files && files.length > 0) {
+        const fileId = files[0].id;
+        await updateFile(fileId, newTasks);
+      } else {
+        await createFile(newTasks);
+      }
+    } catch (err: any) {
+      console.error("Error saving tasks:", err);
+      if (err?.result?.error?.message?.includes("API has not been used")) {
+        const projectId = err.result.error.message.match(/project (\d+)/)?.[1];
+        const url = `https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=${projectId}`;
+        setError(
+          `Google Drive API is not enabled. Please enable it here: <a href="${url}" target="_blank" class="link link-accent">Enable API</a>`
+        );
+      } else {
+        setError("Failed to save tasks.");
+      }
+      throw err;
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const isReady = gapiInitialized && gisInitialized;
+
+  return (
+    <DriveContext.Provider
+      value={{
+        user,
+        isReady,
+        isSyncing,
+        error,
+        tasks,
+        setTasks,
+        handleLogin,
+        handleLogout,
+        loadTasks,
+        saveTasks,
+      }}
+    >
+      {children}
+    </DriveContext.Provider>
+  );
+};
+
+export const useDriveContext = () => {
+  const context = useContext(DriveContext);
+  if (context === undefined) {
+    throw new Error("useDriveContext must be used within a DriveProvider");
+  }
+  return context;
+};
+
+// Backward compatibility or ease of refactor
+export const useDrive = useDriveContext;
