@@ -19,7 +19,8 @@ interface LanguageContextType {
 const translations: Record<Language, Record<string, string>> = {
   en: {
     "app.title": "byteTasks",
-    "app.subtitle": "Manage, sync, and organize your tasks effortlessly.",
+    "app.subtitle":
+      "Create, Manage, Sync and Save your tasks for free on your own Google Drive. 100% privacy",
     login: "Login",
     logout: "Sign Out",
     connected: "Connected",
@@ -32,6 +33,13 @@ const translations: Record<Language, Record<string, string>> = {
     my_tasks: "My Tasks",
     manage_description: "Manage your tasks synced with Google Drive.",
     "theme.select": "Select Theme",
+    "shortcuts.title": "Keyboard Shortcuts",
+    "shortcuts.add": "Add Task",
+    "shortcuts.edit": "Edit Task",
+    "shortcuts.save": "Save Changes",
+    "shortcuts.cancel": "Cancel Edit",
+    "shortcuts.delete": "Delete Task",
+    "shortcuts.double_click": "Double Click",
     settings: "Settings",
     language: "Language",
     welcome: "Welcome",
@@ -39,7 +47,8 @@ const translations: Record<Language, Record<string, string>> = {
   },
   es: {
     "app.title": "byteTasks",
-    "app.subtitle": "Gestiona, sincroniza y organiza tus tareas sin esfuerzo.",
+    "app.subtitle":
+      "Crea, Gestiona, Sincroniza y Guarda tus tareas gratis en tú propio Google Drive. 100% privacidad",
     login: "Iniciar Sesión",
     logout: "Cerrar Sesión",
     connected: "Conectado",
@@ -52,6 +61,13 @@ const translations: Record<Language, Record<string, string>> = {
     my_tasks: "Mis Tareas",
     manage_description: "Gestiona tus tareas sincronizadas con Google Drive.",
     "theme.select": "Seleccionar Tema",
+    "shortcuts.title": "Atajos de Teclado",
+    "shortcuts.add": "Añadir Tarea",
+    "shortcuts.edit": "Editar Tarea",
+    "shortcuts.save": "Guardar Cambios",
+    "shortcuts.cancel": "Cancelar Edición",
+    "shortcuts.delete": "Borrar Tarea",
+    "shortcuts.double_click": "Doble Clic",
     settings: "Ajustes",
     language: "Idioma",
     welcome: "Bienvenido",
