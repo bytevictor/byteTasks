@@ -5,8 +5,8 @@ const repoName = "byteTasks";
 
 const nextConfig: NextConfig = {
   output: "export",
-  basePath: isProd ? `/${repoName}` : undefined,
-  assetPrefix: isProd ? `/${repoName}/` : undefined,
+  //basePath: isProd ? `/${repoName}` : undefined,
+  //assetPrefix: isProd ? `/${repoName}/` : undefined,
   images: {
     unoptimized: true,
   },
