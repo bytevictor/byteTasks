@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# byteTasks 🚀
 
-## Getting Started
+> **Your Tasks. Your Drive. 100% Privacy.**
 
-First, run the development server:
+![byteTasks Banner](https://via.placeholder.com/1200x400?text=byteTasks+Preview)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+**byteTasks** is a modern, privacy-first task management application that lives entirely in your browser. It syncs your data directly to your personal **Google Drive**, ensuring you own your data completely. No third-party servers, no tracking, just you and your tasks.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ✨ Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 🔒 Privacy & Storage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Google Drive Sync**: Seamlessly syncs your tasks to a private JSON file in your Google Drive.
+- **Guest Mode**: Use the app locally without an account. Data stays in your browser's LocalStorage.
+- **Frontend-Only**: Authentication and data handling happen directly between you and Google.
 
-## Learn More
+### 🎨 User Experience
 
-To learn more about Next.js, take a look at the following resources:
+- **Beautiful UI**: Built with a stunning glassmorphism design using **daisyUI** and **TailwindCSS**.
+- **Theming**: Choose from a variety of vibrant themes (Cyberpunk, Retro, Synthwave, and more).
+- **Smooth Animations**: Enjoy fluid transitions and interactions.
+- **Responsive**: Fully optimized for Desktop and Mobile.
+- **Gestures**: Swipe from the right edge on mobile to open the settings drawer.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### ⚡ Productivity
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Keyboard Shortcuts**: Power user? Control your tasks without leaving the keyboard.
+- **Drag & Drop**: Reorder tasks effortlessly.
+- **Bi-lingual**: Native support for **English** 🇺🇸 and **Spanish** 🇪🇸.
 
-## Deploy on Vercel
+## 🛠️ Tech Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Framework**: [Next.js 15+ (App Router)](https://nextjs.org/)
+- **Styling**: [TailwindCSS](https://tailwindcss.com/) & [daisyUI](https://daisyui.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **State Management**: React Context + Hooks
+- **Persistence**: Google Drive API v3 & IndexedDB/LocalStorage
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🚀 Getting Started
+
+### Prerequisites
+
+You will need **Node.js 18+** and a **Google Cloud Project** with the Drive API enabled.
+
+### Installation
+
+1.  **Clone the repository**
+
+    ```bash
+    git clone https://github.com/yourusername/byteTasks.git
+    cd byteTasks
+    ```
+
+2.  **Install dependencies**
+
+    ```bash
+    npm install
+    ```
+
+3.  **Environment Setup**
+    Create a `.env.local` file in the root directory and add your Google Cloud credentials:
+
+    ```env
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
+    NEXT_PUBLIC_GOOGLE_API_KEY=your_api_key
+    ```
+
+4.  **Run the development server**
+
+    ```bash
+    npm run dev
+    ```
+
+5.  Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
