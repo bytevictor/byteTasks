@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   icons: {
     icon: `${basePath}/favicon.ico`,
   },
+  manifest: `${basePath}/manifest.json`,
 };
 
 import { DriveProvider } from "@/app/components/hooks/DriveHook";
