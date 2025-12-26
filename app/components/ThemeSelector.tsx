@@ -87,8 +87,9 @@ export default function ThemeSelector() {
             {THEMES.map((theme) => (
               <div
                 key={theme}
-                className="overflow-hidden rounded-xl border border-base-content/10 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                className="overflow-hidden rounded-box border border-base-content/10 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
                 data-set-theme={theme}
+                data-theme={theme}
                 data-act-class="theme-selected"
               >
                 <div data-theme={theme} className="w-full block bg-transparent">

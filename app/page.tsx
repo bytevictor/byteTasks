@@ -31,7 +31,7 @@ export default function Home() {
         <Navbar />
 
         <div className="grow flex flex-col items-center justify-center p-4 sm:p-10 w-full max-w-4xl -mt-16">
-          <div className="card w-full bg-base-100/60 shadow-2xl backdrop-blur-xl border border-white/20 rounded-3xl overflow-hidden animate-fade-in-up">
+          <div className="card w-full bg-base-100/60 shadow-2xl backdrop-blur-xl border border-white/20 rounded-box overflow-hidden animate-fade-in-up">
             <div className="card-body items-center text-center p-8 sm:p-16">
               {!user && (
                 <>
