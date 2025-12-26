@@ -8,6 +8,7 @@ import {
   useRef,
   ReactNode,
 } from "react";
+import { dbHelper } from "@/app/utils/IndexedDBHelper";
 
 // Types
 export interface Task {
@@ -17,14 +18,18 @@ export interface Task {
   createdAt: number;
 }
 
+export type StorageMode = "drive" | "guest" | "none";
+
 interface DriveContextType {
-  user: any;
+  user: any; // User object for Drive, or { name: "Guest" } for guest
   isReady: boolean;
   isSyncing: boolean;
   error: string | null;
   tasks: Task[];
+  storageMode: StorageMode;
   setTasks: (tasks: Task[]) => void;
   handleLogin: () => void;
+  handleGuestLogin: () => void;
   handleLogout: () => void;
   loadTasks: () => Promise<Task[]>;
   saveTasks: (tasks: Task[]) => Promise<void>;
@@ -57,6 +62,18 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [storageMode, setStorageMode] = useState<StorageMode>("none");
+
+  // Load persistence state on mount
+  useEffect(() => {
+    // Check for saved mode
+    const savedMode = localStorage.getItem("storage_mode") as StorageMode;
+    if (savedMode === "guest") {
+      setStorageMode("guest");
+      setUser({ name: "Guest", picture: null }); // Mock user for guest
+    }
+    // 'drive' restoration is handled by the GAPI useEffect below
+  }, []);
 
   useEffect(() => {
     if (!CLIENT_ID || !API_KEY) {
@@ -113,6 +130,8 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
                   "gdrive_token_expiry",
                   expiryTime.toString()
                 );
+                localStorage.setItem("storage_mode", "drive");
+                setStorageMode("drive");
 
                 // Fetch user info
                 try {
@@ -161,12 +180,14 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
     if (gapiInitialized && !user) {
       const storedToken = localStorage.getItem("gdrive_token");
       const storedExpiry = localStorage.getItem("gdrive_token_expiry");
+      const storedMode = localStorage.getItem("storage_mode");
 
-      if (storedToken && storedExpiry) {
+      if (storedMode === "drive" && storedToken && storedExpiry) {
         const now = Date.now();
         if (now < parseInt(storedExpiry)) {
           console.log("Restoring session...");
           window.gapi.client.setToken({ access_token: storedToken });
+          setStorageMode("drive");
 
           // Fetch user info to validate and populate UI
           fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
@@ -183,8 +204,11 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
             })
             .catch((err) => {
               console.warn("Stored token invalid or expired", err);
+              // Clean up if invalid
               localStorage.removeItem("gdrive_token");
               localStorage.removeItem("gdrive_token_expiry");
+              localStorage.removeItem("storage_mode");
+              setStorageMode("none");
               setUser(null);
             });
         }
@@ -192,12 +216,12 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [gapiInitialized]); // Run when gapi is ready
 
-  // Auto-load tasks when user is authenticated
+  // Auto-load tasks when user/mode changes
   useEffect(() => {
-    if (user) {
+    if (user && storageMode !== "none") {
       loadTasks();
     }
-  }, [user]);
+  }, [user, storageMode]);
 
   const handleLogin = () => {
     if (tokenClient) {
@@ -205,16 +229,39 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const handleGuestLogin = () => {
+    localStorage.setItem("storage_mode", "guest");
+    setStorageMode("guest");
+    setUser({ name: "Guest", picture: null });
+  };
+
   const handleLogout = () => {
-    const token = window.gapi.client.getToken();
-    if (token !== null) {
-      window.google.accounts.oauth2.revoke(token.access_token, () => {
-        window.gapi.client.setToken("");
+    if (storageMode === "drive") {
+      const token = window.gapi.client.getToken();
+      if (token !== null) {
+        window.google.accounts.oauth2.revoke(token.access_token, () => {
+          window.gapi.client.setToken("");
+          localStorage.removeItem("gdrive_token");
+          localStorage.removeItem("gdrive_token_expiry");
+          localStorage.removeItem("storage_mode");
+          setStorageMode("none");
+          setUser(null);
+          setTasks([]);
+        });
+      } else {
+        // Force cleanup even if token object is missing (e.g. expired session)
         localStorage.removeItem("gdrive_token");
         localStorage.removeItem("gdrive_token_expiry");
+        localStorage.removeItem("storage_mode");
+        setStorageMode("none");
         setUser(null);
         setTasks([]);
-      });
+      }
+    } else if (storageMode === "guest") {
+      localStorage.removeItem("storage_mode");
+      setStorageMode("none");
+      setUser(null);
+      setTasks([]);
     }
   };
 
@@ -309,23 +356,36 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
   const loadTasks = async (): Promise<Task[]> => {
     setIsSyncing(true);
     try {
-      const files = await listFiles();
-      if (files && files.length > 0) {
-        const fileId = files[0].id;
-        const response = await window.gapi.client.drive.files.get({
-          fileId: fileId,
-          alt: "media",
-        });
-        const loadedTasks = response.result as Task[];
+      if (storageMode === "guest") {
+        const loadedTasks = await dbHelper.getTasks();
         setTasks(loadedTasks);
         return loadedTasks;
       }
-      setTasks([]);
+
+      // Drive Mode
+      if (storageMode === "drive") {
+        const files = await listFiles();
+        if (files && files.length > 0) {
+          const fileId = files[0].id;
+          const response = await window.gapi.client.drive.files.get({
+            fileId: fileId,
+            alt: "media",
+          });
+          const loadedTasks = response.result as Task[];
+          setTasks(loadedTasks);
+          return loadedTasks;
+        }
+        setTasks([]);
+        return [];
+      }
+
       return [];
     } catch (err: any) {
       console.error("Error loading tasks:", err);
-      // Basic loop to check error message for 'API has not been used'
-      if (err?.result?.error?.message?.includes("API has not been used")) {
+      if (
+        storageMode === "drive" &&
+        err?.result?.error?.message?.includes("API has not been used")
+      ) {
         const projectId = err.result.error.message.match(/project (\d+)/)?.[1];
         const url = `https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=${projectId}`;
         setError(
@@ -353,16 +413,27 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
     // Set new timeout
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        const files = await listFiles();
-        if (files && files.length > 0) {
-          const fileId = files[0].id;
-          await updateFile(fileId, newTasks);
-        } else {
-          await createFile(newTasks);
+        if (storageMode === "guest") {
+          await dbHelper.saveTasks(newTasks);
+          setIsSyncing(false);
+          return;
+        }
+
+        if (storageMode === "drive") {
+          const files = await listFiles();
+          if (files && files.length > 0) {
+            const fileId = files[0].id;
+            await updateFile(fileId, newTasks);
+          } else {
+            await createFile(newTasks);
+          }
         }
       } catch (err: any) {
         console.error("Error saving tasks:", err);
-        if (err?.result?.error?.message?.includes("API has not been used")) {
+        if (
+          storageMode === "drive" &&
+          err?.result?.error?.message?.includes("API has not been used")
+        ) {
           const projectId =
             err.result.error.message.match(/project (\d+)/)?.[1];
           const url = `https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=${projectId}`;
@@ -393,8 +464,10 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
         isSyncing,
         error,
         tasks,
+        storageMode,
         setTasks,
         handleLogin,
+        handleGuestLogin,
         handleLogout,
         loadTasks,
         saveTasks,
@@ -403,7 +476,7 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </DriveContext.Provider>
   );
-};
+}; // End of DriveProvider
 
 export const useDriveContext = () => {
   const context = useContext(DriveContext);

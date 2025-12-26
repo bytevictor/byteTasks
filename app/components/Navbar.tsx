@@ -40,7 +40,9 @@ export default function Navbar() {
                     <img src={user.picture} alt="User Profile" />
                   ) : (
                     <div className="bg-neutral text-neutral-content w-full h-full flex items-center justify-center">
-                      <span className="text-xs">U</span>
+                      <span className="text-xs font-bold">
+                        {user.name && user.name.charAt(0).toUpperCase()}
+                      </span>
                     </div>
                   )}
                 </div>
