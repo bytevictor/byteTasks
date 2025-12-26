@@ -12,6 +12,23 @@ export default function SyncBadge({
 
   if (!user) return null;
 
+  if (isSyncing) {
+    return (
+      <div className="flex items-center gap-2 transition-all duration-300">
+        {/* Mobile: Icon only, text-warning */}
+        <div className="sm:hidden text-base-content/70 p-2">
+          <RefreshCw className="w-5 h-5 animate-spin" />
+        </div>
+
+        {/* Desktop: Badge style */}
+        <div className="hidden sm:flex badge gap-2 p-3 font-medium shadow-sm">
+          <RefreshCw className="w-4 h-4 animate-spin" />
+          {t("syncing")}
+        </div>
+      </div>
+    );
+  }
+
   if (storageMode === "guest") {
     return (
       <div className="flex items-center gap-2 transition-all duration-300">
@@ -24,23 +41,6 @@ export default function SyncBadge({
         <div className="hidden sm:flex badge badge-neutral gap-2 p-3 font-medium shadow-sm">
           <HardDrive className="w-4 h-4" />
           {t("local_storage")}
-        </div>
-      </div>
-    );
-  }
-
-  if (isSyncing) {
-    return (
-      <div className="flex items-center gap-2 transition-all duration-300">
-        {/* Mobile: Icon only, text-warning */}
-        <div className="sm:hidden text-warning p-2">
-          <RefreshCw className="w-5 h-5 animate-spin" />
-        </div>
-
-        {/* Desktop: Badge style */}
-        <div className="hidden sm:flex badge badge-warning gap-2 p-3 font-medium shadow-sm">
-          <RefreshCw className="w-4 h-4 animate-spin" />
-          {t("syncing")}
         </div>
       </div>
     );
