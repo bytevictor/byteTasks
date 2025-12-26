@@ -1,5 +1,5 @@
 import { useDriveContext } from "@/app/components/hooks/DriveHook";
-import { BadgeCheck, RefreshCw } from "lucide-react"; // Using BadgeCheck icon
+import { BadgeCheck, RefreshCw, HardDrive } from "lucide-react"; // Using HardDrive for local
 import { useLanguage } from "@/app/components/hooks/LanguageHook";
 
 export default function SyncBadge({
@@ -7,10 +7,27 @@ export default function SyncBadge({
 }: {
   showLabel?: boolean;
 }) {
-  const { isSyncing, user } = useDriveContext();
+  const { isSyncing, user, storageMode } = useDriveContext();
   const { t } = useLanguage();
 
   if (!user) return null;
+
+  if (storageMode === "guest") {
+    return (
+      <div className="flex items-center gap-2 transition-all duration-300">
+        {/* Mobile: Icon only, text-neutral/content */}
+        <div className="sm:hidden text-base-content/70 p-2">
+          <HardDrive className="w-6 h-6" />
+        </div>
+
+        {/* Desktop: Badge style - Neutral/Info */}
+        <div className="hidden sm:flex badge badge-neutral gap-2 p-3 font-medium shadow-sm">
+          <HardDrive className="w-4 h-4" />
+          {t("local_storage")}
+        </div>
+      </div>
+    );
+  }
 
   if (isSyncing) {
     return (

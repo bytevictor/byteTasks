@@ -20,6 +20,7 @@ export default function Home() {
     handleGuestLogin,
     tasks,
     setTasks,
+    storageMode,
   } = useDriveContext();
   const { t } = useLanguage();
 
@@ -124,7 +125,9 @@ export default function Home() {
                       </h2>
                     </div>
                     <p className="text-base-content/60">
-                      {t("manage_description")}
+                      {storageMode === "guest"
+                        ? t("manage_description_guest")
+                        : t("manage_description")}
                     </p>
                   </div>
                   <TaskList

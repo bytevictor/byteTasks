@@ -46,6 +46,8 @@ const translations: Record<Language, Record<string, string>> = {
     guest: "Guest",
     continue_guest: "Continue as Guest",
     guest_login_desc: "Your data is saved on this device only.",
+    manage_description_guest: "Your tasks are saved locally on this device.",
+    local_storage: "Local Storage",
   },
   es: {
     "app.title": "byteTasks",
@@ -62,6 +64,8 @@ const translations: Record<Language, Record<string, string>> = {
     "task.empty.subtitle": "¡Añade una arriba para empezar!",
     my_tasks: "Mis Tareas",
     manage_description: "Gestiona tus tareas sincronizadas con Google Drive.",
+    manage_description_guest:
+      "Tus tareas se guardan localmente en este dispositivo.",
     "theme.select": "Seleccionar Tema",
     "shortcuts.title": "Atajos de Teclado",
     "shortcuts.add": "Añadir Tarea",
@@ -76,6 +80,7 @@ const translations: Record<Language, Record<string, string>> = {
     guest: "Invitado",
     continue_guest: "Continuar como Invitado",
     guest_login_desc: "Tus datos se guardan solo en este dispositivo.",
+    local_storage: "Almacenamiento Local",
   },
 };
 
