@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 
 import { DriveProvider } from "@/app/components/hooks/DriveHook";
 import { LanguageProvider } from "@/app/components/hooks/LanguageHook";
+import { ServiceWorkerRegister } from "@/app/components/ServiceWorkerRegister";
 
 export default function RootLayout({
   children,
@@ -38,7 +39,10 @@ export default function RootLayout({
       // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <LanguageProvider>
-          <DriveProvider>{children}</DriveProvider>
+          <DriveProvider>
+            {children}
+            <ServiceWorkerRegister />
+          </DriveProvider>
         </LanguageProvider>
       </body>
     </html>
