@@ -101,6 +101,18 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
             scope: SCOPES,
             callback: async (tokenResponse: any) => {
               if (tokenResponse && tokenResponse.access_token) {
+                // Save to localStorage
+                const expiresIn = tokenResponse.expires_in || 3599;
+                const expiryTime = Date.now() + expiresIn * 1000;
+                localStorage.setItem(
+                  "gdrive_token",
+                  tokenResponse.access_token
+                );
+                localStorage.setItem(
+                  "gdrive_token_expiry",
+                  expiryTime.toString()
+                );
+
                 // Fetch user info
                 try {
                   const userInfoResponse = await fetch(
@@ -143,6 +155,42 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
     loadGis();
   }, []);
 
+  // Persistence: Check for stored token on mount (after gapi init)
+  useEffect(() => {
+    if (gapiInitialized && !user) {
+      const storedToken = localStorage.getItem("gdrive_token");
+      const storedExpiry = localStorage.getItem("gdrive_token_expiry");
+
+      if (storedToken && storedExpiry) {
+        const now = Date.now();
+        if (now < parseInt(storedExpiry)) {
+          console.log("Restoring session...");
+          window.gapi.client.setToken({ access_token: storedToken });
+
+          // Fetch user info to validate and populate UI
+          fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: {
+              Authorization: `Bearer ${storedToken}`,
+            },
+          })
+            .then((res) => {
+              if (!res.ok) throw new Error("Token invalid");
+              return res.json();
+            })
+            .then((userInfo) => {
+              setUser(userInfo);
+            })
+            .catch((err) => {
+              console.warn("Stored token invalid or expired", err);
+              localStorage.removeItem("gdrive_token");
+              localStorage.removeItem("gdrive_token_expiry");
+              setUser(null);
+            });
+        }
+      }
+    }
+  }, [gapiInitialized]); // Run when gapi is ready
+
   // Auto-load tasks when user is authenticated
   useEffect(() => {
     if (user) {
@@ -161,6 +209,8 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
     if (token !== null) {
       window.google.accounts.oauth2.revoke(token.access_token, () => {
         window.gapi.client.setToken("");
+        localStorage.removeItem("gdrive_token");
+        localStorage.removeItem("gdrive_token_expiry");
         setUser(null);
         setTasks([]);
       });
