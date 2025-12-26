@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useDriveContext } from "@/app/components/hooks/DriveHook";
 import TaskList from "@/app/components/TaskList";
 import ThemeSelector from "@/app/components/ThemeSelector";
+import ShortcutsPanel from "./components/ShortcutsPanel";
 import Navbar from "@/app/components/Navbar";
 import SyncBadge from "@/app/components/SyncBadge";
 import { useLanguage } from "@/app/components/hooks/LanguageHook";
@@ -22,15 +24,57 @@ export default function Home() {
 
   const isLoading = !isReady; // Simplification
 
+  // Swipe Gesture Handling
+  const touchStart = useRef<number | null>(null);
+  const touchEnd = useRef<number | null>(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchEnd.current = null;
+    touchStart.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    touchEnd.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart.current || !touchEnd.current) return;
+    const distance = touchStart.current - touchEnd.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    const drawerCheckbox = document.getElementById(
+      "theme-drawer"
+    ) as HTMLInputElement;
+
+    if (isLeftSwipe) {
+      // Open drawer (Right to Left swipe)
+      if (drawerCheckbox) drawerCheckbox.checked = true;
+    }
+
+    if (isRightSwipe) {
+      // Close drawer (Left to Right swipe)
+      if (drawerCheckbox) drawerCheckbox.checked = false;
+    }
+  };
+
   return (
-    <div className="drawer drawer-end bg-base-100 min-h-screen font-sans">
+    <div
+      className="drawer drawer-end bg-base-100 min-h-screen font-sans"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       <input id="theme-drawer" type="checkbox" className="drawer-toggle" />
 
       {/* Page Content */}
       <div className="drawer-content flex flex-col items-center relative bg-linear-to-br from-base-200 to-base-300 min-h-screen">
         <Navbar />
-
-        <div className="grow flex flex-col items-center justify-center p-4 sm:p-10 w-full max-w-4xl -mt-16">
+        <ShortcutsPanel />
+        <div className="drawer-content flex flex-col items-center justify-center min-h-[calc(100vh-64px)] p-4 pt-20 w-full max-w-4xl -mt-16">
           <div className="card w-full bg-base-100/60 shadow-2xl backdrop-blur-xl border border-white/20 rounded-box overflow-hidden animate-fade-in-up">
             <div className="card-body items-center text-center p-8 sm:p-16">
               {!user && (

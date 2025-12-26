@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Task } from "@/app/components/hooks/DriveHook";
 import { Plus, Trash2, ClipboardList, Pencil, Check, X } from "lucide-react";
 import { useLanguage } from "@/app/components/hooks/LanguageHook";
@@ -41,6 +41,22 @@ export default function TaskList({
   // Editing State
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl + N to focus input
+      if ((e.ctrlKey || e.metaKey) && e.key === "n") {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // ... (keep addTask, toggleTask, deleteTask functions as is) check next diff for logic retention
 
@@ -139,6 +155,7 @@ export default function TaskList({
         <div className="flex gap-2 items-center bg-base-100 p-2 rounded-full shadow-lg border border-base-300 focus-within:ring-2 ring-primary transition-all">
           <input
             className="input input-ghost w-full focus:outline-hidden text-lg pl-6"
+            ref={inputRef}
             placeholder={t("task.placeholder")}
             value={newTaskText}
             onChange={(e) => setNewTaskText(e.target.value)}
@@ -179,13 +196,22 @@ export default function TaskList({
                 {tasks.map((task) => (
                   <SortableTaskItem key={task.id} id={task.id}>
                     <div
-                      className={`group flex items-center gap-4 p-4 rounded-2xl bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-all duration-200 hover:border-primary/20 ${
+                      className={`group flex items-center gap-4 p-4 rounded-2xl bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-all duration-200 hover:border-primary/20 cursor-pointer select-none ${
                         task.completed ? "opacity-60 bg-base-200/50" : ""
                       }`}
+                      onClick={() => toggleTask(task.id)}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        startEditing(task);
+                      }}
                     >
                       {editingId === task.id ? (
                         // Edit Mode
-                        <div className="flex items-center gap-2 w-full animate-in fade-in zoom-in duration-200">
+                        <div
+                          className="flex items-center gap-2 w-full animate-in fade-in zoom-in duration-200"
+                          onClick={(e) => e.stopPropagation()}
+                          onDoubleClick={(e) => e.stopPropagation()}
+                        >
                           <input
                             className="input input-bordered w-full"
                             value={editText}
@@ -215,17 +241,17 @@ export default function TaskList({
                           <input
                             type="checkbox"
                             checked={task.completed}
-                            onChange={() => toggleTask(task.id)}
-                            className="checkbox checkbox-primary checkbox-lg rounded-full border-2"
+                            onChange={() => {}} // Handled by parent onClick
+                            onClick={(e) => e.stopPropagation()} // Prevent double toggle
+                            className="checkbox checkbox-primary checkbox-lg rounded-full border-2 pointer-events-none"
                           />
                           <span
-                            className={`flex-1 text-lg transition-all duration-200 cursor-pointer ${
+                            className={`flex-1 text-lg transition-all duration-200 ${
                               task.completed
                                 ? "line-through text-base-content/50"
                                 : "text-base-content font-medium"
                             }`}
-                            onDoubleClick={() => startEditing(task)}
-                            title="Double click to edit"
+                            title="Click to toggle, Double click to edit"
                           >
                             {task.text}
                           </span>
@@ -233,14 +259,20 @@ export default function TaskList({
                           {/* Actions Group */}
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
                             <button
-                              onClick={() => startEditing(task)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startEditing(task);
+                              }}
                               className="btn btn-ghost btn-circle btn-sm text-info hover:bg-info/10 hover:scale-110"
                               aria-label="Edit task"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => deleteTask(task.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteTask(task.id);
+                              }}
                               className="btn btn-ghost btn-circle btn-sm text-error hover:bg-error/10 hover:scale-110"
                               aria-label="Delete task"
                             >
