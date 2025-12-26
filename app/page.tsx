@@ -172,7 +172,7 @@ export default function Home() {
                     <div className="divider opacity-50 text-sm my-0">Or</div>
                     <button
                       onClick={handleGuestLogin}
-                      className="btn btn-outline btn-neutral w-full transition-all duration-300 hover:scale-[1.02]"
+                      className="btn btn-outline btn-secondary w-full transition-all duration-300 hover:scale-[1.02]"
                     >
                       {t("continue_guest")}
                     </button>
