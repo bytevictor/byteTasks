@@ -32,6 +32,7 @@ interface DriveContextType {
 const DriveContext = createContext<DriveContextType | undefined>(undefined);
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || "";
 const DISCOVERY_DOCS = [
   "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
 ];
@@ -57,9 +58,9 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-    if (!CLIENT_ID) {
+    if (!CLIENT_ID || !API_KEY) {
       setError(
-        "Google Client ID is missing. Please add NEXT_PUBLIC_GOOGLE_CLIENT_ID to .env.local"
+        "Missing Credentials. Please add NEXT_PUBLIC_GOOGLE_CLIENT_ID and NEXT_PUBLIC_GOOGLE_API_KEY to .env.local"
       );
       return;
     }
@@ -75,6 +76,7 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
         window.gapi.load("client", async () => {
           try {
             await window.gapi.client.init({
+              apiKey: API_KEY,
               discoveryDocs: DISCOVERY_DOCS,
             });
             setGapiInitialized(true);
