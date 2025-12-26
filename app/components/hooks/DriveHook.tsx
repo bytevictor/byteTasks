@@ -308,7 +308,11 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
           `Google Drive API is not enabled. Please enable it here: <a href="${url}" target="_blank" class="link link-accent">Enable API</a>`
         );
       } else {
-        setError("Failed to save tasks.");
+        setError(
+          `Failed to save tasks: ${
+            err.message || JSON.stringify(err.result?.error || err)
+          }`
+        );
       }
       throw err;
     } finally {
