@@ -5,6 +5,7 @@ import {
   useEffect,
   createContext,
   useContext,
+  useRef,
   ReactNode,
 } from "react";
 
@@ -337,37 +338,49 @@ export const DriveProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const saveTasks = async (newTasks: Task[]) => {
-    setIsSyncing(true);
     // Optimistic update
     setTasks(newTasks);
-    try {
-      const files = await listFiles();
-      if (files && files.length > 0) {
-        const fileId = files[0].id;
-        await updateFile(fileId, newTasks);
-      } else {
-        await createFile(newTasks);
-      }
-    } catch (err: any) {
-      console.error("Error saving tasks:", err);
-      if (err?.result?.error?.message?.includes("API has not been used")) {
-        const projectId = err.result.error.message.match(/project (\d+)/)?.[1];
-        const url = `https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=${projectId}`;
-        setError(
-          `Google Drive API is not enabled. Please enable it here: <a href="${url}" target="_blank" class="link link-accent">Enable API</a>`
-        );
-      } else {
-        setError(
-          `Failed to save tasks: ${
-            err.message || JSON.stringify(err.result?.error || err)
-          }`
-        );
-      }
-      throw err;
-    } finally {
-      setIsSyncing(false);
+    setIsSyncing(true);
+
+    // Clear previous timeout (Debounce)
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
+
+    // Set new timeout
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const files = await listFiles();
+        if (files && files.length > 0) {
+          const fileId = files[0].id;
+          await updateFile(fileId, newTasks);
+        } else {
+          await createFile(newTasks);
+        }
+      } catch (err: any) {
+        console.error("Error saving tasks:", err);
+        if (err?.result?.error?.message?.includes("API has not been used")) {
+          const projectId =
+            err.result.error.message.match(/project (\d+)/)?.[1];
+          const url = `https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=${projectId}`;
+          setError(
+            `Google Drive API is not enabled. Please enable it here: <a href="${url}" target="_blank" class="link link-accent">Enable API</a>`
+          );
+        } else {
+          setError(
+            `Failed to save tasks: ${
+              err.message || JSON.stringify(err.result?.error || err)
+            }`
+          );
+        }
+      } finally {
+        setIsSyncing(false);
+        saveTimeoutRef.current = null;
+      }
+    }, 2000); // Wait 2 seconds of inactivity before saving
   };
 
   const isReady = gapiInitialized && gisInitialized;
