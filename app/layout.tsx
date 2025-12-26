@@ -12,8 +12,7 @@ import "./globals.css";
 //   subsets: ["latin"],
 // });
 
-const isProd = process.env.NODE_ENV === "production";
-const basePath = isProd ? "/byteTasks" : "";
+const basePath = "";
 
 export const metadata: Metadata = {
   title: "byteTasks",
