@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: "byteTasks",
   description:
     "Gestor de tareas serverless con arquitectura BYOS (Bring Your Own Storage).",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 import { DriveProvider } from "@/app/components/hooks/DriveHook";
