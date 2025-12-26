@@ -12,12 +12,15 @@ import "./globals.css";
 //   subsets: ["latin"],
 // });
 
+const isProd = process.env.NODE_ENV === "production";
+const basePath = isProd ? "/byteTasks" : "";
+
 export const metadata: Metadata = {
   title: "byteTasks",
   description:
     "Gestor de tareas serverless con arquitectura BYOS (Bring Your Own Storage).",
   icons: {
-    icon: "/favicon.ico",
+    icon: `${basePath}/favicon.ico`,
   },
 };
 
