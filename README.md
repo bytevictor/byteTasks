@@ -1,4 +1,4 @@
-# byteTasks 🚀
+# byteTasks ✅
 
 > **Your Tasks. Your Drive. 100% Privacy.**
 
