@@ -14,6 +14,12 @@ import "./globals.css";
 
 const basePath = "";
 
+import type { Viewport } from "next";
+
+export const viewport: Viewport = {
+  themeColor: "#0a0a0a",
+};
+
 export const metadata: Metadata = {
   title: "byteTasks",
   description:
@@ -34,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark">
       <body
       // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
