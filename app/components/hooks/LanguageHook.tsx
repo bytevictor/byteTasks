@@ -20,7 +20,7 @@ const translations: Record<Language, Record<string, string>> = {
   en: {
     "app.title": "byteTasks",
     "app.subtitle":
-      "Create, Manage, Sync and Save your tasks for free on your own Google Drive. 100% privacy",
+      "Create, Manage, Sync and Save your tasks for free on your own Google Drive. Frontend-Only - 100% privacy",
     login: "Login",
     logout: "Sign Out",
     connected: "Connected",
@@ -44,11 +44,13 @@ const translations: Record<Language, Record<string, string>> = {
     language: "Language",
     welcome: "Welcome",
     guest: "Guest",
+    continue_guest: "Continue as Guest",
+    guest_login_desc: "Your data is saved on this device only.",
   },
   es: {
     "app.title": "byteTasks",
     "app.subtitle":
-      "Crea, Gestiona, Sincroniza y Guarda tus tareas gratis en tú propio Google Drive. 100% privacidad",
+      "Crea, Gestiona, Sincroniza y Guarda tus tareas gratis en tú propio Google Drive. Frontend-Only - 100% privacidad",
     login: "Iniciar Sesión",
     logout: "Cerrar Sesión",
     connected: "Conectado",
@@ -72,6 +74,8 @@ const translations: Record<Language, Record<string, string>> = {
     language: "Idioma",
     welcome: "Bienvenido",
     guest: "Invitado",
+    continue_guest: "Continuar como Invitado",
+    guest_login_desc: "Tus datos se guardan solo en este dispositivo.",
   },
 };
 
