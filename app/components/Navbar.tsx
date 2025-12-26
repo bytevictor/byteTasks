@@ -1,5 +1,5 @@
 import { useDriveContext } from "@/app/components/hooks/DriveHook";
-import { Settings, SettingsIcon } from "lucide-react";
+import { Settings, SettingsIcon, User, UserIcon } from "lucide-react";
 import SyncBadge from "./SyncBadge";
 import { useLanguage } from "@/app/components/hooks/LanguageHook";
 
@@ -40,9 +40,7 @@ export default function Navbar() {
                     <img src={user.picture} alt="User Profile" />
                   ) : (
                     <div className="bg-neutral text-neutral-content w-full h-full flex items-center justify-center">
-                      <span className="text-xs font-bold">
-                        {user.name && user.name.charAt(0).toUpperCase()}
-                      </span>
+                      <UserIcon className="w-5 h-5" />
                     </div>
                   )}
                 </div>
