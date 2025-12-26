@@ -4,7 +4,8 @@ import SyncBadge from "./SyncBadge";
 import { useLanguage } from "@/app/components/hooks/LanguageHook";
 
 export default function Navbar() {
-  const { user, isReady, handleLogin, handleLogout } = useDriveContext();
+  const { user, isReady, handleLogin, handleLogout, storageMode } =
+    useDriveContext();
   const { t } = useLanguage();
 
   return (
@@ -25,7 +26,7 @@ export default function Navbar() {
         ) : user ? (
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex text-primary text-sm font-medium opacity-70">
-              {t("connected")}
+              {storageMode === "guest" ? t("guest") : t("connected")}
             </div>
 
             {/* Profile Dropdown */}
