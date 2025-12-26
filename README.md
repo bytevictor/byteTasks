@@ -2,8 +2,6 @@
 
 > **Your Tasks. Your Drive. 100% Privacy.**
 
-![byteTasks Banner](https://via.placeholder.com/1200x400?text=byteTasks+Preview)
-
 **byteTasks** is a modern, privacy-first task management application that lives entirely in your browser. It syncs your data directly to your personal **Google Drive**, ensuring you own your data completely. No third-party servers, no tracking, just you and your tasks.
 
 ## ✨ Features
